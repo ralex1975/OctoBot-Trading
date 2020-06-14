@@ -61,6 +61,21 @@ class OrdersProducer(ExchangeChannelProducer):
         except Exception as e:
             self.logger.exception(e, True, f"Exception when triggering update: {e}")
 
+    async def update_order_from_exchange(self, order):
+        """
+        Update Order from exchange
+        :param order: the order to update
+        :return: True if the order was updated
+        """
+        print("update_order_from_exchange")
+        self.logger.debug(f"Requested update for {order.get_name()}")
+        raw_order = await self.channel.exchange_manager.exchange.get_order(order.order_id, order.symbol)
+        return await self.channel.exchange_manager.exchange_personal_data.handle_order_update_from_raw(
+                order.symbol,
+                order.order_id,
+                raw_order,
+                should_notify=False)
+
     async def send(self, cryptocurrency, symbol, order, is_from_bot=True, is_closed=False, is_updated=False):
         for consumer in self.channel.get_filtered_consumers(symbol=symbol):
             await consumer.queue.put({
